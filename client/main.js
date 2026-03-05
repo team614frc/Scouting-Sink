@@ -23,15 +23,24 @@ document.getElementById("scoutingForm").addEventListener("submit", function(even
 
 document.getElementById("resetButton").addEventListener("click", resetData())
 
-function serializeData()
+async function serializeData()
 {
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = getName()
-    a.click()
-    URL.revokeObjectURL(url)
+    const fileHandle = await window.showSaveFilePicker({
+        suggestedName: getName(),
+        types: [
+            {
+                description: "JSON File",
+                accept: { "application/json": [".json"]}
+            }
+        ]
+    });
+
+    const writable = await fileHandle.createWritable();
+
+    await writable.write(JSON.stringify(data, null, 2));
+
+    await writable.close();
+
     resetData()
 }
 
