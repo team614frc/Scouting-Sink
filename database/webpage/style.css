@@ -1,0 +1,16 @@
+body { 
+    font-family: system-ui, Arial; 
+    padding: 16px; 
+}
+    
+button { 
+    padding: 8px 10px; 
+    margin-right: 8px; 
+}
+    
+pre { 
+    background: #f6f6f6; 
+    padding: 12px; 
+    border-radius: 8px; 
+    overflow: auto; 
+}
