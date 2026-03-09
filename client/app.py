@@ -5,6 +5,7 @@ from tkinter import filedialog
 from pathlib import Path
 from datetime import datetime
 import configparser
+from api.FormBuilder import FormBuilder
 
 ROOT = Path(__file__).resolve().parent
 
@@ -23,20 +24,32 @@ def _reloadSettings():
 def main():
     _reloadSettings()
 
+    main_window = tk.Tk()
+    screen_width = main_window.winfo_screenwidth()
+    screen_height = main_window.winfo_screenheight()
+    main_window.geometry("1000x600+%d+%d" % (screen_width/2-500, screen_height/2-300))
+    main_window.resizable(True,True)
+
+    mainFrame = tk.Frame(master = main_window)
+    mainFrame.pack(fill="both", expand=True, padx=20, pady=20)
+
+    form = FormBuilder(mainFrame)
+    form.text("team_id", "Team Id")
+    form.text("notes", "Notes")
+    form.toggle("approved", "Approved")
+    form.multi_button("priority", "Priority", ["Low", "Medium", "High"], default="Medium")
+
+    form.render()
+
+
+
     def submit_form():
         if(settings["client_id"] == "default_client_id"):
             messagebox.showwarning("Client Id Not Set", "Please set a valid Client Id before submitting the form.")
             return
-        
-        messagebox.showinfo("Form Submitted", f"Team Id: {id_entry.get()}\nNotes: {notes_entry.get()}")
+        payload = form.get_export_data()
 
-        data = [
-                {
-                    "team_id": id_entry.get(),
-                    "notes": notes_entry.get(),
-                    "status": selected_status.get()
-                }
-            ]
+        messagebox.showinfo("Form Submitted", json.dumps(payload, indent=4))
         
         file_name = f"{settings['client_id']}_{datetime.now().strftime('%Y%m%d%H%M%S')}.json"
         if Path(settings["export_directory"]) != DEFAULT_OUTPUT_DIR:
@@ -44,71 +57,13 @@ def main():
         else:
             export_file = DEFAULT_OUTPUT_DIR / file_name
         with open(export_file, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=4)
-
-    main_window = tk.Tk()
-    screen_width = main_window.winfo_screenwidth()
-    screen_height = main_window.winfo_screenheight()
-    main_window.geometry("1000x600+%d+%d" % (screen_width/2-500, screen_height/2-300))
-    main_window.resizable(True,True)
-
-
-    mainFrame = tk.Frame(master = main_window)
-    mainFrame.pack()
-
-    id_label = tk.Label(master=mainFrame, text="Team Id:")
-    id_label.grid(row=0, column=0)
-    id_entry = tk.Entry(master=mainFrame)
-    id_entry.grid(row=0, column=1)  
-
-    notes_label = tk.Label(master=mainFrame, text="Notes:")
-    notes_label.grid(row=1, column=0)
-    notes_entry = tk.Entry(master=mainFrame)
-    notes_entry.grid(row=1, column=1)
-
-    selected_status = tk.StringVar(value="option_1")
-
-    status_label = tk.Label(master=mainFrame, text="Status:")
-    status_label.grid(row=2, column=0, sticky="nw")
-
-    status_frame = tk.Frame(master=mainFrame)
-    status_frame.grid(row=2, column=1, sticky="w")
-
-    option_1_button = tk.Radiobutton(
-        master=status_frame,
-        text="Option 1",
-        variable=selected_status,
-        value="option_1",
-        indicatoron=0,
-        width=12
-    )
-    option_1_button.grid(row=0, column=0, padx=2, pady=2)
-
-    option_2_button = tk.Radiobutton(
-        master=status_frame,
-        text="Option 2",
-        variable=selected_status,
-        value="option_2",
-        indicatoron=0,
-        width=12
-    )
-    option_2_button.grid(row=0, column=1, padx=2, pady=2)
-
-    option_3_button = tk.Radiobutton(
-        master=status_frame,
-        text="Option 3",
-        variable=selected_status,
-        value="option_3",
-        indicatoron=0,
-        width=12
-    )
-    option_3_button.grid(row=0, column=2, padx=2, pady=2)
+            json.dump(payload, f, indent=4)
 
     submit_button = tk.Button(master=mainFrame, text="Submit", command=submit_form)
-    submit_button.grid(row=3, column=0, columnspan=2)
+    submit_button.grid(row=4, column=0, columnspan=2)
 
     open_settings_button = tk.Button(master=mainFrame, text="Open Settings", command=lambda: openSettings(main_window))
-    open_settings_button.grid(row=6, column=0, columnspan=2)
+    open_settings_button.grid(row=5, column=0, columnspan=2)
 
     main_window.mainloop()
 
