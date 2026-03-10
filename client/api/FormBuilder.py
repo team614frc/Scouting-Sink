@@ -9,40 +9,60 @@ class FormBuilder:
         self.fields.append(field)
         return field
     
-    def text(self, key, label, default=""):
-        return self.add_field(TextField(key, label, default))
+    def text(self, key, label, default="", required=False):
+        return self.add_field(TextField(key, label, default, required))
     
-    def toggle(self, key, label, default=False):
-        return self.add_field(ToggleField(key, label, default))
+    def toggle(self, key, label, default=False, required=False):
+        return self.add_field(ToggleField(key, label, default, required))
     
-    def multi_button(self, key, label, options, default=None):
-        return self.add_field(MultiButtonField(key, label, options, default))
+    def multi_button(self, key, label, options, default=None, required=False):
+        return self.add_field(MultiButtonField(key, label, options, default, required))
     
     def render(self):
         for row, field in enumerate(self.fields):
             field.render(self.parent, row)
         self.parent.grid_columnconfigure(1, weight=1)
 
+    def validate(self):
+        errors = []
+        for field in self.fields:
+            error = field.validate()
+            if error:
+                errors.append(error)
+        return errors
+
     def get_export_data(self):
         return {field.key: field.get_value() for field in self.fields}
 
 
 class BaseField:
-    def __init__(self, key, label, default=None):
+    def __init__(self, key, label, default=None, required=False):
         self.key = key
         self.label = label
         self.default = default
+        self.required = required
 
     def render(self, parent, row):
         raise NotImplementedError("Subclasses must implement render()")
         
     def get_value(self):
         raise NotImplementedError("Subclasses must implement get_value()")
+    
+    def validate(self):
+        value = self.get_value()
+        if self.required:
+            if value is None:
+                return f"{self.label} is required."
+            if isinstance(value, str) and not value.strip():
+                return f"{self.label} cannot be empty."
+            if isinstance(value, list) and len(value) == 0:
+                return f"{self.label} must have at least one selection."
+        return None
         
 
 class TextField(BaseField):
-    def __init__(self, key, label, default=""):
-        super().__init__(key, label, default)
+    def __init__(self, key, label, default="", required=False):
+        super().__init__(key, label, default, required)
         self.var = tk.StringVar(value=default)
         self.entry = None
 
@@ -56,8 +76,8 @@ class TextField(BaseField):
 
 
 class ToggleField(BaseField):
-    def __init__(self, key, label, default=False):
-        super().__init__(key, label, default)
+    def __init__(self, key, label, default=False, required=False):
+        super().__init__(key, label, default, required)
         self.var = tk.BooleanVar(value=default)
 
     def render(self, parent, row):
@@ -69,8 +89,8 @@ class ToggleField(BaseField):
 
 
 class MultiButtonField(BaseField):
-    def __init__(self, key, label, options, default=None):
-        super().__init__(key, label, default if default is not None else options[0])
+    def __init__(self, key, label, options, default=None, required=False):
+        super().__init__(key, label, default if default is not None else options[0], required)
         self.options = options
         self.var = tk.StringVar(value=self.default)
 

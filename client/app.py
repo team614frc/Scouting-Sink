@@ -34,7 +34,7 @@ def main():
     mainFrame.pack(fill="both", expand=True, padx=20, pady=20)
 
     form = FormBuilder(mainFrame)
-    form.text("team_id", "Team Id")
+    form.text("team_id", "Team Id", required=True)
     form.text("notes", "Notes")
     form.toggle("approved", "Approved")
     form.multi_button("priority", "Priority", ["Low", "Medium", "High"], default="Medium")
@@ -47,6 +47,12 @@ def main():
         if(settings["client_id"] == "default_client_id"):
             messagebox.showwarning("Client Id Not Set", "Please set a valid Client Id before submitting the form.")
             return
+        
+        errors = form.validate()
+        if errors:
+            messagebox.showerror("Validation Error", "\n".join(errors))
+            return
+
         payload = form.get_export_data()
 
         messagebox.showinfo("Form Submitted", json.dumps(payload, indent=4))
