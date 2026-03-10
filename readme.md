@@ -1,8 +1,6 @@
 ## Scouting Sink
 ---
-
-Install on server
-`pip install -r requirements.txt`
-
-Install on server & client
+Run these commands:
 `winget install syncthing.syncthing`
+`winget install Python.Python.3.14`
+`pip install -r requirements.txt`
